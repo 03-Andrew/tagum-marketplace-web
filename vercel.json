@@ -11,7 +11,8 @@
     "ignoreCommand": "git diff --quiet HEAD^ HEAD ./api/",
     "functions": {
         "api/**/*": {
-            "maxDuration": 0
+            "maxDuration": 0 
         }
     }
 }
+
