@@ -1,9 +1,14 @@
 const db = require('../config/db');
 
 const getTotalAmountFromSales = async () => {
-    await db.query(`CALL GetTotalSalesInfo(@TotalSalesAmount, @StartDate, @EndDate);`);
-    const [rows] = await db.query(`SELECT @TotalSalesAmount as TotalAmount, 
-        @StartDate as StartDate, @EndDate as EndDate;`);
+    const [rows] = await db.query(`
+        SELECT 
+            SUM(sd.Unit_Price * sd.Quantity) as TotalAmount,
+            MIN(s.Sales_Date) as StartDate,
+            MAX(s.Sales_Date) as EndDate
+        FROM sales s
+        JOIN salesdetails sd ON s.Sales_ID = sd.Sales_ID
+    `);
     return rows[0];
 }
 
@@ -53,4 +58,5 @@ const getYearlyTotalSales = async () => {
     ORDER BY Sales_Year;`);
     return rows;
 }
+
 module.exports = { getTotalAmountFromSales, getTotalProducts, getTotalCustomers, getTotalSales, getMonthlyTotalSales, getWeeklyTotalSales, getYearlyTotalSales };

@@ -1,13 +1,32 @@
-const mysql = require('mysql2');
-const pool = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+const Database = require('better-sqlite3');
+const path = require('path');
 
+const dbPath = path.join(__dirname, '..', 'database.sqlite');
+const db = new Database(dbPath);
 
-module.exports = pool.promise();
+// Enable foreign keys
+db.pragma('foreign_keys = ON');
+
+// Helper function to wrap SQLite queries to match MySQL2's promise interface
+const wrapDB = {
+    query: (sql, params = []) => {
+        try {
+            // For SELECT queries
+            if (sql.trim().toLowerCase().startsWith('select')) {
+                const stmt = db.prepare(sql);
+                const rows = stmt.all(params);
+                return Promise.resolve([rows]);
+            }
+            // For INSERT, UPDATE, DELETE queries
+            else {
+                const stmt = db.prepare(sql);
+                const result = stmt.run(params);
+                return Promise.resolve([result]);
+            }
+        } catch (error) {
+            return Promise.reject(error);
+        }
+    }
+};
+
+module.exports = wrapDB;
