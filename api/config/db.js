@@ -1,9 +1,12 @@
 const { Pool } = require('pg');
 
+// Use pooled connection by default, fall back to non-pooled if needed
+const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString,
     ssl: {
-        rejectUnauthorized: false
+        rejectUnauthorized: true
     }
 });
 

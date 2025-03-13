@@ -3,10 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 
+// Use non-pooled connection for schema initialization
+const connectionString = process.env.POSTGRES_URL_NON_POOLING;
+
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString,
     ssl: {
-        rejectUnauthorized: false
+        rejectUnauthorized: true
     }
 });
 
