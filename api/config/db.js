@@ -1,30 +1,21 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+const { Pool } = require('pg');
 
-const dbPath = path.join(__dirname, '..', 'database.sqlite');
-const db = new Database(dbPath);
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
+});
 
-// Enable foreign keys
-db.pragma('foreign_keys = ON');
-
-// Helper function to wrap SQLite queries to match MySQL2's promise interface
+// Wrapper to maintain compatibility with existing code
 const wrapDB = {
-    query: (sql, params = []) => {
+    query: async (sql, params = []) => {
+        const client = await pool.connect();
         try {
-            // For SELECT queries
-            if (sql.trim().toLowerCase().startsWith('select')) {
-                const stmt = db.prepare(sql);
-                const rows = stmt.all(params);
-                return Promise.resolve([rows]);
-            }
-            // For INSERT, UPDATE, DELETE queries
-            else {
-                const stmt = db.prepare(sql);
-                const result = stmt.run(params);
-                return Promise.resolve([result]);
-            }
-        } catch (error) {
-            return Promise.reject(error);
+            const result = await client.query(sql, params);
+            return [result.rows];
+        } finally {
+            client.release();
         }
     }
 };
